@@ -47,6 +47,12 @@ def validar_aluno(aluno):
             pendencias.append(f"{campo}: valor negativo")
             continue
 
+        if numero > Decimal("10"):
+            pendencias.append(
+                f"{campo}: valor {texto} acima de 10 na escala simulada"
+            )
+            continue
+
         dados[campo] = format(numero, "f")
 
     return dados, pendencias
@@ -112,6 +118,25 @@ def salvar_pendencias(resultados):
     print("\nRelatório salvo em relatorios/pendencias.csv")
     resultados = analisar_alunos()
 
+MEDIA_APROVACAO = Decimal("6.0")
+
+
+def calcular_resultado(dados):
+    nota_1 = Decimal(dados["Nota01"])
+    tf_1 = Decimal(dados["TF01"])
+    nota_2 = Decimal(dados["Nota02"])
+    tf_2 = Decimal(dados["TF02"])
+
+    periodo_1 = (nota_1 * 8 + tf_1 * 2) / 10
+    periodo_2 = (nota_2 * 8 + tf_2 * 2) / 10
+    media = (periodo_1 + periodo_2) / 2
+
+    situacao = "Reprovado"
+
+    if media >= MEDIA_APROVACAO:
+        situacao = "Aprovado"
+
+    return periodo_1, periodo_2, media, situacao
 
 if __name__ == "__main__":
     resultados = analisar_alunos()

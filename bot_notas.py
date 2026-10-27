@@ -3,7 +3,7 @@ import time
 import pyautogui
 import pyperclip
 
-from validacao_notas import analisar_alunos
+from validacao_notas import analisar_alunos, calcular_resultado
 
 
 pyautogui.FAILSAFE = True
@@ -81,9 +81,18 @@ def executar():
     for campo in CAMPOS_FORMULARIO:
         print(f"{campo}: {resultado['dados'][campo]}")
 
-    print("\nEscalas e aprovação ainda não foram validadas.")
-    preencher_formulario(resultado["dados"])
+        periodo_1, periodo_2, media, situacao = calcular_resultado(
+        resultado["dados"]
+    )
 
+    print("\nResultado da simulação:")
+    print(f"Período 1: {periodo_1:.2f}")
+    print(f"Período 2: {periodo_2:.2f}")
+    print(f"Média final: {media:.2f}")
+    print(f"Situação simulada: {situacao}")
+    print("Hipótese: notas de 0 a 10, pesos 8 e 2, aprovação a partir de 6.")
+
+    preencher_formulario(resultado["dados"])
 
 if __name__ == "__main__":
     executar()
