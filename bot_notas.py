@@ -3,6 +3,9 @@ import time
 import pyautogui
 import pyperclip
 
+import csv
+from pathlib import Path
+
 from validacao_notas import analisar_alunos, calcular_resultado
 
 
@@ -11,6 +14,40 @@ pyautogui.PAUSE = 0.5
 
 CAMPOS_FORMULARIO = ["RA", "Nome", "Nota01", "Nota02", "TF01", "TF02"]
 
+CAMINHO_ENVIADOS = (
+    Path(__file__).resolve().parent / "relatorios" / "enviados.csv"
+)
+
+
+def aluno_ja_enviado(ra):
+    if not CAMINHO_ENVIADOS.exists():
+        return False
+
+    with CAMINHO_ENVIADOS.open(
+        "r", encoding="utf-8-sig", newline=""
+    ) as arquivo:
+        leitor = csv.DictReader(arquivo)
+
+        for linha in leitor:
+            if linha["ra"] == ra:
+                return True
+
+    return False
+
+
+def registrar_envio(ra):
+    CAMINHO_ENVIADOS.parent.mkdir(exist_ok=True)
+    arquivo_existe = CAMINHO_ENVIADOS.exists()
+
+    with CAMINHO_ENVIADOS.open(
+        "a", encoding="utf-8-sig", newline=""
+    ) as arquivo:
+        escritor = csv.DictWriter(arquivo, fieldnames=["ra"])
+
+        if not arquivo_existe:
+            escritor.writeheader()
+
+        escritor.writerow({"ra": ra})
 
 def normalizar_busca(texto):
     return " ".join(texto.split()).casefold()
@@ -61,9 +98,11 @@ def preencher_formulario(dados):
     print("Confira no navegador se a resposta foi registrada.")
 
 
-def executar():
+def executar(busca=None):
     resultados = analisar_alunos()
-    busca = input("Digite o RA ou o nome completo do aluno: ").strip()
+
+    if busca is None:
+        busca = input("Digite o RA ou o nome completo do aluno: ").strip()
 
     if not busca:
         print("Informe um RA ou nome para pesquisar.")
@@ -80,6 +119,10 @@ def executar():
         return
 
     resultado = encontrados[0]
+
+    if aluno_ja_enviado(resultado["dados"]["RA"]):
+        print("Este RA já consta como enviado. Confira o formulário.")
+        return
 
     if resultado["pendencias"]:
         print("\nPreenchimento bloqueado pelas seguintes pendências:")
@@ -106,6 +149,45 @@ def executar():
     print("Hipótese: notas de 0 a 10, pesos 8 e 2, aprovação a partir de 6.")
 
     preencher_formulario(resultado["dados"])
+    confirmacao = input(
+        "A tela confirmou que a resposta foi registrada? (s/n): "
+    ).strip().lower()
+
+    if confirmacao == "s":
+        registrar_envio(resultado["dados"]["RA"])
+        print("Envio confirmado e registrado.")
+    else:
+        print("Envio não registrado. Confira o formulário antes de tentar novamente.")
+
+def processar_lote():
+    resultados = analisar_alunos()
+
+    for resultado in resultados:
+        dados = resultado["dados"]
+        ra = dados["RA"]
+
+        if resultado["pendencias"]:
+            print(f"\nIgnorado: {dados['Nome']} — possui pendências.")
+            continue
+
+        if aluno_ja_enviado(ra):
+            print(f"\nIgnorado: RA {ra} já registrado como enviado.")
+            continue
+
+        print(f"\nPróximo aluno: {dados['Nome']} — RA {ra}")
+        print("Abra um formulário vazio antes de continuar.")
+
+        acao = input(
+            "Pressione Enter para processar ou digite q para encerrar: "
+        ).strip().lower()
+
+        if acao == "q":
+            print("Processamento interrompido.")
+            return
+
+        executar(ra)
+
+    print("\nFim da lista de alunos.")
 
 if __name__ == "__main__":
-    executar()
+    processar_lote()
