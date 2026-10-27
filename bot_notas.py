@@ -157,7 +157,9 @@ def executar(busca=None):
         registrar_envio(resultado["dados"]["RA"])
         print("Envio confirmado e registrado.")
     else:
-        print("Envio não registrado. Confira o formulário antes de tentar novamente.")
+        print("Envio não confirmado. O processamento será encerrado.")
+        print("Confira a aba Respostas antes de tentar novamente.")
+        raise SystemExit
 
 def processar_lote():
     resultados = analisar_alunos()
