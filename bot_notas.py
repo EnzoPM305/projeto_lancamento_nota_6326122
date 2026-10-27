@@ -45,7 +45,20 @@ def preencher_formulario(dados):
         if indice < len(CAMPOS_FORMULARIO) - 1:
             pyautogui.press("tab")
 
-    print("Preenchimento concluído. Nenhuma resposta foi enviada.")
+    print("Preenchimento concluído.")
+    print("Confira os dados no formulário antes de continuar.")
+
+    input("Volte ao terminal e pressione Enter para tentar enviar...")
+
+    print("Você tem 5 segundos para voltar ao formulário.")
+    time.sleep(5)
+
+    # Parte do último campo para o botão Enviar.
+    pyautogui.press("tab")
+    pyautogui.press("enter")
+
+    print("Comando de envio executado.")
+    print("Confira no navegador se a resposta foi registrada.")
 
 
 def executar():
